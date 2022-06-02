@@ -1,16 +1,17 @@
 import { useEffect } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, Image, ScrollView, ActivityIndicator } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Image, ActivityIndicator } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { SwipeListView } from 'react-native-swipe-list-view';
 import { observer } from "mobx-react-lite";
 import { useNavigation } from "@react-navigation/native";
 import { useStore } from "../hooks";
 
 const Home = observer(() => {
   const navigation = useNavigation();
-  const { loading, currencies, getCurrencies } = useStore();
+  const { loading, message, currencies, getCurrencies, removeCoin } = useStore();
 
   useEffect(() => {
-    let timer = setInterval(getCurrencies, 30000);
+    let timer = setInterval(getCurrencies, 60000);
     return () => timer && clearInterval(timer);
   }, []);
 
@@ -20,33 +21,44 @@ const Home = observer(() => {
         <Text style={styles.title}>Crypto Currency</Text>
         <Image source={{ uri: "https://avatars.githubusercontent.com/u/65152313" }} style={styles.avatar} />
       </View>
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollCon}>
-        {loading ? <ActivityIndicator size={"large"} color="#667799" style={styles.loading} /> : null}
-        {currencies.map((currency) => (
-          <TouchableOpacity
-            key={currency.symbol}
-            activeOpacity={0.8}
-            style={styles.item}
-            onPress={() => navigation.navigate("Detail", currency)}
-          >
-            <View style={styles.itemRow}>
-              <Text style={styles.itemStrong}>{currency.name}</Text>
-              <Text style={styles.itemStrong}>${currency.price}</Text>
-            </View>
-            <View style={styles.itemRow}>
-              <Text style={styles.itemCoin}>{currency.symbol}</Text>
-              <Text style={styles.itemPercent}>{currency.percent}%</Text>
+      {loading ? <ActivityIndicator size={"large"} color="#667799" style={styles.loading} /> : null}
+      {message ? <Text style={styles.error}>{message}</Text> : null}
+      <SwipeListView 
+        data={currencies}
+        rightOpenValue={-80}
+        keyExtractor={(currency) => currency.symbol}
+        renderItem={({item: currency}) => (
+          <TouchableOpacity style={styles.item} onPress={() => navigation.navigate("Detail", currency)} activeOpacity={1}>
+            <View style={styles.itemCon}>
+              <View style={styles.itemRow}>
+                <Text style={styles.itemStrong}>{currency.name}</Text>
+                <Text style={styles.itemStrong}>${currency.price}</Text>
+              </View>
+              <View style={styles.itemRow}>
+                <Text style={styles.itemCoin}>{currency.symbol}</Text>
+                <Text style={styles.itemPercent}>{currency.percent}%</Text>
+              </View>
             </View>
           </TouchableOpacity>
-        ))}
-        {!loading ? (
-          <View style={styles.create}>
-            <TouchableOpacity onPress={() => navigation.navigate("Create")}>
-              <Text style={styles.createText}>+ Add a Crypto Currency</Text>
+        )} 
+        renderHiddenItem={({item: currency}) => (
+          <View style={styles.itemHidden}>
+            <TouchableOpacity style={styles.itemBtn} onPress={() => removeCoin(currency.symbol)}>
+              <Text style={styles.itemText}>delete</Text>
             </TouchableOpacity>
           </View>
-        ) : null}
-      </ScrollView>
+        )} 
+        ListFooterComponent={() => {
+          if (loading) return null;
+          return (
+            <View style={styles.create}>
+              <TouchableOpacity onPress={() => navigation.navigate("Create")}>
+                <Text style={styles.createText}>+ Add a Crypto Currency</Text>
+              </TouchableOpacity>
+            </View>
+          )
+        }}
+      />
     </SafeAreaView>
   );
 });
@@ -77,16 +89,14 @@ const styles = StyleSheet.create({
     height: 60,
     borderRadius: 30,
   },
-  scrollView: {
-    flex: 1,
-  },
-  scrollCon: {
-    paddingHorizontal: 20,
-  },
   loading: {
     marginTop: 100,
   },
   item: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 20,
+  },
+  itemCon: {
     paddingVertical: 20,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: "#999",
@@ -106,6 +116,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#666",
   },
+  itemHidden: {
+    flex: 1, 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'flex-end'
+  },
+  itemBtn: {
+    bottom: 0, 
+    top: 0, 
+    right:0, 
+    position: 'absolute', 
+    width: 80, 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    backgroundColor: 'red'
+  },
+  itemText: {
+    fontSize: 16,
+    color: '#fff'
+  },
   create: {
     height: 100,
     alignItems: "center",
@@ -114,5 +144,11 @@ const styles = StyleSheet.create({
   createText: {
     fontSize: 16,
     color: "#666",
+  },
+  error: {
+    marginVertical: 10,
+    paddingHorizontal: 20,
+    color: 'red',
+    fontSize: 14
   }
 });

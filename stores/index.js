@@ -7,9 +7,11 @@ const defaultInitialCoins = ["BTC", "ETH", "DOGE"];
 
 const seriesCallback = (currency) => {
   return (callback) => {
-    getMetrics(currency)
-      .then((res) => callback(null, res))
-      .catch(callback);
+    setTimeout(() => {
+      getMetrics(currency)
+        .then((res) => callback(null, res))
+        .catch(callback);
+    }, 800)
   };
 };
 
@@ -17,6 +19,7 @@ class Index {
   coins = [];
   currencies = [];
   loading = true;
+  message = '';
 
   constructor(coins) {
     makeAutoObservable(this);
@@ -25,11 +28,10 @@ class Index {
 
   getCurrencies = () => {
     series(this.coins.map(seriesCallback), (err, result) => {
-      if (err) return;
-
       runInAction(() => {
-        if (this.loading) this.loading = false;
-        this.currencies = result;
+        this.loading = false;
+        this.message = err ? (err.response.data?.status?.error_message || err.message) : '';
+        if (!err) this.currencies = result;
       })
     });
   }
@@ -40,13 +42,13 @@ class Index {
   }
 
   addCurrency = (coin, currency) => {
-    this.coins.push(coin);
-    this.currencies.push(currency);
+    this.coins = [...this.coins, coin];
+    this.currencies = [...this.currencies, currency];
   }
 
   removeCoin = (coin) => {
-    this.coins = this.coins.filter((val) => val !== coin);
-    this.getCurrencies();
+    this.coins = this.coins.filter(val => val !== coin);
+    this.currencies = this.currencies.filter(currency => currency.symbol !== coin);
   }
 }
 

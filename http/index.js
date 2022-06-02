@@ -8,7 +8,7 @@ const instance = axios.create({
   headers: {
     Accept: "application/json",
     "Content-Type": "application/json",
-    "x-messari-api-key": "0f365ae9-dfc8-44f7-9d24-cabaa7968a65",
+    "x-messari-api-key": "d21aeab2-d12f-4ea5-bfff-7eb684aba5a1",
   },
 });
 
@@ -20,8 +20,7 @@ export const getMetrics = async (currency) => {
       symbol,
       name,
       price: market_data.price_usd?.toFixed(2),
-      percent: market_data.percent_change_usd_last_24_hours?.toFixed(2),
-      market_data,
+      percent: market_data.percent_change_usd_last_24_hours?.toFixed(2)
     };
   } catch (err) {
     return Promise.reject(err);
